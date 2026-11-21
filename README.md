@@ -2,6 +2,8 @@
 
 <h1>OpenMausBot on Railway</h1>
 
+<p><sub><b>Unofficial community template</b></sub></p>
+
 <p>
   Host your own <a href="https://github.com/milind-soni/OpenMausBot">OpenMausBot</a> on <a href="https://railway.com">Railway</a>.<br/>
   It runs the official image, so there's no code to build or maintain.
@@ -129,4 +131,10 @@ Set these in your Railway service's **Variables** tab.
 
 ## License
 
-[MIT](LICENSE). OpenMausBot itself is a separate project with [its own license](https://github.com/milind-soni/OpenMausBot).
+[MIT](LICENSE) covers the files in this repo only. OpenMausBot itself is a separate project under the [Apache License 2.0](https://github.com/milind-soni/OpenMausBot/blob/main/LICENSE).
+
+## Disclaimer
+
+This is an **unofficial community template**. It is not affiliated with or endorsed by Supamaus Software Private Limited. It deploys the unmodified official OpenMausBot image.
+
+*OpenMausBot* and *MausBot*, and the MausBot mascot, are trademarks of Supamaus Software Private Limited. They're used here only to say which software this template deploys.

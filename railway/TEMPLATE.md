@@ -1,5 +1,7 @@
 # Deploy and Host OpenMausBot with Railway
 
+> **Unofficial community template.** Not affiliated with or endorsed by Supamaus Software Private Limited. OpenMausBot and MausBot are trademarks of Supamaus Software Private Limited.
+
 OpenMausBot is an open-source, self-hosted team of AI coding bots. They run on your own Claude Code and Codex sign-ins, and each bot gets its own browser. This template runs the official OpenMausBot image behind a small built-in proxy, so you have it online in minutes with nothing to build.
 
 ## About Hosting OpenMausBot

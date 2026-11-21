@@ -216,3 +216,7 @@ It's probably running out of memory. Allow about 1 GB, plus 700 MB for each bot 
 <div align="center">
 <sub>Still stuck? <a href="https://github.com/KiraQiez/openmausbot-railway/issues">Open an issue</a>.</sub>
 </div>
+
+<div align="center">
+<sub>Unofficial community template. Not affiliated with or endorsed by Supamaus Software Private Limited. OpenMausBot and MausBot are trademarks of Supamaus Software Private Limited.</sub>
+</div>
