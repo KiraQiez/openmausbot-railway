@@ -10,6 +10,13 @@ if [ "$(stat -c %U /data)" != maus ]; then
   chown -R maus:maus /data
 fi
 
+# The server leaves a lease file tying /data to the machine it ran on. After a
+# redeploy the new container may land on another machine, and the server would
+# refuse to start, thinking the folder is still in use. Railway attaches a
+# volume to only one running container at a time, so any lease found here is
+# stale and safe to remove.
+rm -f /data/.openmausbot/openmausbot-server.lease
+
 # Directory for the Unix sockets that connect Caddy to the server.
 install -d -o maus -g maus -m 0755 /run/openmausbot
 
