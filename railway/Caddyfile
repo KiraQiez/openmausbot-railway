@@ -1,0 +1,38 @@
+# Edge proxy: takes Railway's traffic on $PORT and forwards it to the
+# OpenMausBot server over Unix sockets (the server never listens on TCP).
+{
+	# No admin API, no TLS (Railway terminates HTTPS), no config written to disk.
+	admin off
+	auto_https off
+	persist_config off
+	servers {
+		# Trust Railway's proxy for the real client IP.
+		trusted_proxies static private_ranges
+		client_ip_headers X-Forwarded-For
+	}
+}
+
+:{$PORT:8080} {
+	encode zstd gzip
+
+	# Incoming webhooks go to the dedicated webhook socket.
+	handle /hooks/* {
+		reverse_proxy unix//run/openmausbot/hooks.sock {
+			# Retry while the server is still starting up.
+			lb_try_duration 30s
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	# Everything else (web UI, API, streaming) goes to the main socket.
+	handle {
+		reverse_proxy unix//run/openmausbot/http.sock {
+			lb_try_duration 30s
+			header_up X-Forwarded-Proto https
+			# Caddy compresses responses itself; ask upstream for plain bodies.
+			header_up -Accept-Encoding
+			# Flush immediately so streamed responses aren't buffered.
+			flush_interval -1
+		}
+	}
+}

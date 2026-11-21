@@ -1,0 +1,5 @@
+# Only the Dockerfile and railway/ are needed to build the image.
+.git
+.github
+*.md
+LICENSE

@@ -1,53 +1,123 @@
-# OpenMausBot on Railway
+<div align="center">
 
-Run [OpenMausBot](https://github.com/milind-soni/OpenMausBot) on [Railway](https://railway.com) from the official image, with nothing to build from source.
+<h1>OpenMausBot on Railway</h1>
 
-This repo is a thin layer on top of `ghcr.io/milind-soni/openmausbot:latest`:
+<p>
+  Host your own <a href="https://github.com/milind-soni/OpenMausBot">OpenMausBot</a> on <a href="https://railway.com">Railway</a>.<br/>
+  It runs the official image, so there's no code to build or maintain.
+</p>
 
-| File | What it does |
+<p>
+  <a href="https://github.com/KiraQiez/openmausbot-railway/actions/workflows/ci.yml"><img src="https://github.com/KiraQiez/openmausbot-railway/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"/></a>
+  <a href="https://railway.com"><img src="https://img.shields.io/badge/hosted%20on-Railway-0B0D0E?logo=railway&logoColor=white" alt="Railway"/></a>
+</p>
+
+<p>
+  <a href="SETUP.md"><b>Setup Guide</b></a> ·
+  <a href="#how-it-works">How It Works</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="SETUP.md#troubleshooting">Troubleshooting</a>
+</p>
+
+</div>
+
+<br/>
+
+## What is this?
+
+OpenMausBot is a self-hosted AI coding assistant. It's built to run on your own machine, so out of the box it **only accepts connections from inside its own computer**.
+
+This repo adds a small layer that lets it run safely on Railway. You get:
+
+|  |  |
 |---|---|
-| `Dockerfile` | Starts from the official image and adds Caddy, plus the Claude Code and Codex CLIs. |
-| `Caddyfile` | Listens on Railway's `$PORT` and forwards to the server's Unix socket. |
-| `start.sh` | Fixes the volume's owner, then runs the server and Caddy as the unprivileged `maus` user. |
-| `openmausbot.sh` | The `openmausbot` command; run as root (as `railway ssh` does), it switches to `maus` first. |
+| **Always up to date** | Every redeploy pulls the latest official OpenMausBot release. |
+| **No passwords** | You sign in each device once with a one-time pairing link. |
+| **Ready to code** | Claude Code and Codex come preinstalled. |
+| **Nothing gets lost** | Chats, sign-ins and devices are saved on a Railway volume. |
 
-## Why the layer is needed
+<br/>
 
-The official image only listens on `127.0.0.1` inside the container. Loopback trust is OpenMausBot's security model, so Railway's proxy can't reach it directly. Caddy, in the same container, takes Railway's traffic and passes it to the server over a Unix socket. Every request that comes in that way counts as remote and has to be paired.
+## Quick start
 
-Railway also mounts volumes owned by root, while the image runs as `maus`; `start.sh` fixes that on start.
+> **New to Railway?** Follow the **[Setup Guide](SETUP.md)**. It walks through every click in about 10 minutes.
 
-## Deploy
+If you've used Railway before:
 
-1. In Railway, create a project and pick **Deploy from GitHub repo**, choosing this repo (or your fork of it).
-2. **Add a volume** to the service, mounted at `/data`. Chats, engine sign-ins and paired devices live there.
-3. Under **Settings → Networking**, choose **Generate Domain**, with port `8080`.
-4. Set these variables on the service:
+1. Fork this repo, then in Railway choose **New Project → Deploy from GitHub repo**.
+2. Attach a volume mounted at **`/data`**.
+3. Generate a domain on port **`8080`**.
+4. Add these variables:
+   ```env
+   PORT=8080
+   OMB_PUBLIC_URL=https://<your-domain>
+   OMB_WEBHOOK_PUBLIC_URL=https://<your-domain>
+   ```
+5. Pair your browser:
+   ```sh
+   railway ssh -- openmausbot pair --ttl 24h
+   ```
 
-   | Variable | Value |
-   |---|---|
-   | `PORT` | `8080` |
-   | `OMB_PUBLIC_URL` | `https://<your-domain>.up.railway.app` |
-   | `OMB_WEBHOOK_PUBLIC_URL` | same as `OMB_PUBLIC_URL` |
+<br/>
 
-5. Optional, under **Settings → Deploy**: set the healthcheck path to `/api/health` with a 300 s timeout, and the restart policy to *On failure*.
+## How it works
 
-Every push to this repo redeploys the service. A redeploy also pulls the newest official OpenMausBot image.
-
-To leave out the engine CLIs, or choose others, set `ENGINES` as a variable. Railway passes service variables to the Docker build as build arguments. An empty value installs none.
-
-## Sign in
-
-OpenMausBot has no passwords: a device signs in once with a one-time pairing code. With the [Railway CLI](https://docs.railway.com/guides/cli) linked to the service:
-
-```sh
-railway ssh -- openmausbot pair --ttl 24h
+```mermaid
+flowchart LR
+    U([You]) -->|HTTPS| R[Railway]
+    subgraph C [Your container]
+        direction LR
+        CA[Caddy<br/><sub>listens on $PORT</sub>] -->|Unix socket| O[OpenMausBot]
+        O --- D[(/data volume)]
+    end
+    R --> CA
 ```
 
-Open the link it prints. The browser stays signed in for 30 days, and each visit renews that up to 180 days. Run the command again for each new device; `--phone` gives a phone chat and approvals only.
+**The problem:** OpenMausBot only talks to programs on the same machine. Railway's network sits outside the container, so it can't reach the server.
 
-`railway ssh` needs an SSH key registered with Railway (`railway ssh keys add`).
+**The fix:** [Caddy](https://caddyserver.com), a small web server, runs in the same container. It takes visitors from Railway and passes them to OpenMausBot through a private **Unix socket**, a connection that exists only inside the container.
 
-## Sizing
+**Staying secure:** the server treats every visitor who comes in through Caddy as a stranger, so each device has to be paired before it can do anything.
 
-The server uses about 1 GB of memory idle, plus about 700 MB for each bot that is working. See OpenMausBot's [self-hosting guide](https://github.com/milind-soni/OpenMausBot/blob/main/docs/self-hosting.md#running-on-a-container-platform-railway-render-kubernetes-cloud-run) for process and memory limits.
+<br/>
+
+## What's inside
+
+| File | Purpose |
+|---|---|
+| [`Dockerfile`](Dockerfile) | Starts from the official image, then adds Caddy and the engine CLIs. |
+| [`railway/Caddyfile`](railway/Caddyfile) | Tells Caddy to forward web traffic to OpenMausBot. |
+| [`railway/start.sh`](railway/start.sh) | Runs when the container starts. Prepares the volume, then starts OpenMausBot and Caddy. |
+| [`railway/openmausbot.sh`](railway/openmausbot.sh) | The `openmausbot` command you run through `railway ssh`. |
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | Checks the scripts and test-builds the image on every push. |
+
+<br/>
+
+## Configuration
+
+Set these in your Railway service's **Variables** tab.
+
+| Variable | Required | Description |
+|---|:---:|---|
+| `PORT` | ✓ | The port Caddy listens on. Use `8080`, the same port you give the domain. |
+| `OMB_PUBLIC_URL` | ✓ | Your app's public address, e.g. `https://my-bot.up.railway.app`. |
+| `OMB_WEBHOOK_PUBLIC_URL` | ✓ | Where webhooks are sent. Use the same value as above. |
+| `ENGINES` |  | Which AI coding tools to install. Defaults to Claude Code and Codex. Leave it empty to install none. |
+
+**Memory:** plan for about **1 GB** while idle, plus about **700 MB** for each bot that's working.
+
+<br/>
+
+## Updating
+
+| To get… | Do this |
+|---|---|
+| The newest OpenMausBot | Click **Redeploy** in Railway. |
+| The newest version of this repo | Click **Sync fork** on GitHub. Railway redeploys on its own. |
+
+<br/>
+
+## License
+
+[MIT](LICENSE). OpenMausBot itself is a separate project with [its own license](https://github.com/milind-soni/OpenMausBot).
