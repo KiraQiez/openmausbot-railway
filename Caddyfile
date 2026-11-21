@@ -1,0 +1,27 @@
+{
+	admin off
+	auto_https off
+	persist_config off
+	servers {
+		trusted_proxies static private_ranges
+		client_ip_headers X-Forwarded-For
+	}
+}
+
+:{$PORT:8080} {
+	encode zstd gzip
+	handle /hooks/* {
+		reverse_proxy unix//run/openmausbot/hooks.sock {
+			lb_try_duration 30s
+			header_up X-Forwarded-Proto https
+		}
+	}
+	handle {
+		reverse_proxy unix//run/openmausbot/http.sock {
+			lb_try_duration 30s
+			header_up X-Forwarded-Proto https
+			header_up -Accept-Encoding
+			flush_interval -1
+		}
+	}
+}
