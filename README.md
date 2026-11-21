@@ -41,6 +41,14 @@ This repo adds a small layer that lets it run safely on Railway. You get:
 
 ## Quick start
 
+### One click
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/openmausbot-1)
+
+The template sets up the service, the `/data` volume, the domain and the variables for you. When it's **Active**, jump to [signing in](SETUP.md#step-6--sign-in).
+
+### By hand
+
 > **New to Railway?** Follow the **[Setup Guide](SETUP.md)**. It walks through every click in about 10 minutes.
 
 If you've used Railway before:
@@ -90,6 +98,7 @@ flowchart LR
 | [`railway/Caddyfile`](railway/Caddyfile) | Tells Caddy to forward web traffic to OpenMausBot. |
 | [`railway/start.sh`](railway/start.sh) | Runs when the container starts. Prepares the volume, then starts OpenMausBot and Caddy. |
 | [`railway/openmausbot.sh`](railway/openmausbot.sh) | The `openmausbot` command you run through `railway ssh`. |
+| [`railway/TEMPLATE.md`](railway/TEMPLATE.md) | The overview shown on the Railway template page. |
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | Checks the scripts and test-builds the image on every push. |
 
 <br/>

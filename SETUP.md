@@ -10,6 +10,10 @@
 
 <br/>
 
+> [!TIP]
+> **Want the fast way?** [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/openmausbot-1)
+> The template does Steps 1 to 5 for you. Once it's **Active**, skip to [Step 6](#step-6--sign-in).
+
 ## Overview
 
 | Step | What you'll do | Time |
